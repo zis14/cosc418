@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <string.h>
+#include <omnetpp.h>
+#include"Appmessage_m.h"
+
+using namespace omnetpp;
+
+class PacketGenerator : public cSimpleModule
+{
+private:
+simsignal_t arrivalSignal;
+int no_sent;
+int no_rcvd;
+double time_interval;
+
+protected:
+    virtual Appmessage *generateMessage();
+    virtual void forwardMessage(Appmessage *msg);
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+};
+
+Define_Module(PacketGenerator);
+
+void PacketGenerator::initialize()
+{
+no_sent=0;
+no_rcvd=0;
+arrivalSignal = registerSignal("arrival");
+if (getIndex() == 0)
+{
+Appmessage *msg = generateMessage();
+        scheduleAt(0.0, msg);
+}
+}
+
+void PacketGenerator::handleMessage(cMessage*msg)
+{
+
+Appmessage *ttmsg = check_and_cast<AppMessage *>(msg);
+
+EV << "Generating another message: ";
+        AppMessage *newmsg = generateMessage();
+        EV << newmsg << endl;
+        forwardMessage(newmsg);
+
+}
+Appmessage *PacketGenerator::generateMessage()
+{
+int senderId=getId(); // from TransmitterNode module
+int dest=getMac(); // from TransmitterNode module
+int msgSize=64*1024; //64 bytes fixed
+int seqno=no_sent;
+
+if(msg->isSelfMessage());
+   {
+     send(out_msg,"out");
+     no_sent++;
+     scheduletAT(simTime()+time_interval,msg);
+    }
+else
+{
+no_rcvd++;
+delete(msg);
+}
+}
+
+
+void PacketGenerator::finish()
+{
+recordScalor("Numberof recieved messages",no_rcvd);
+recordScalor("Number of sent messages",no_sent);
+}
+
